@@ -173,6 +173,7 @@ namespace lqx {
 
 
 	const wchar_t *_wifishareCommonLib_proc3_DeviceName;
+	bool _wifishareCommonLib_proc3_found;
 
 	void wifishareCommonLib_proc3(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction)
 	{
@@ -180,8 +181,12 @@ namespace lqx {
 		if (!wcscmp(NetConnectionInfo->DeviceName, _wifishareCommonLib_proc3_DeviceName)) {
 			*SharingType = SharingType_Public;
 		}
-		else if (!wcscmp(NetConnectionInfo->DeviceName, HOSTEDNETWORK_DEVICENAME)) {
-			*SharingType = SharingType_Private;
+		else if (wcsstr(NetConnectionInfo->DeviceName, HOSTEDNETWORK_DEVICENAME)) {
+			if (!_wifishareCommonLib_proc3_found)
+			{
+				*SharingType = SharingType_Private;
+				_wifishareCommonLib_proc3_found = true;
+			}
 		}
 
 	}
@@ -191,6 +196,7 @@ namespace lqx {
 		StopSharing();
 
 		_wifishareCommonLib_proc3_DeviceName = DeviceName;
+		_wifishareCommonLib_proc3_found = false;
 		EnumConnections(&wifishareCommonLib_proc3);
 		
 	}
