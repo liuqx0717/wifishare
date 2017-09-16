@@ -332,6 +332,8 @@
     <None Include="res\wifishare.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\ScreenCapture1.png" />
+    <Image Include="..\ScreenCapture2.png" />
     <Image Include="res\wifishare.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

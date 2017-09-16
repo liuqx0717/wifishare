@@ -78,5 +78,7 @@
     <Image Include="res\wifishare.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="..\ScreenCapture1.png" />
+    <Image Include="..\ScreenCapture2.png" />
   </ItemGroup>
 </Project>
