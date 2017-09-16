@@ -81,6 +81,9 @@ BOOL CwifishareApp::InitInstance()
 		MessageBox(NULL, L"CreateEvent调用失败。", L"wifishare", 16);
 	}
 
+	CwifishareDlg dlg;
+	INT_PTR nResponse;
+
 
 	if (!lqx::IsRunasAdmin()) {
 		//如果没有管理员权限，则请求以管理员身份运行
@@ -102,14 +105,21 @@ BOOL CwifishareApp::InitInstance()
 		return 0;
 	}
 
+	//初始化windock
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {
+		MessageBox(NULL, L"WSAStartup调用失败。", L"wifishare", 16);
+		goto finish;
+	}
 
-	CwifishareDlg dlg;
-	INT_PTR nResponse;
 
-	//m_pMainWnd = &dlg;
 
-start:
+
+start: //显示主对话框
+
+	   //m_pMainWnd = &dlg;
 	try {
+
 		nResponse = dlg.DoModal();
 
 		if (nResponse == DIALOGRESULT_CLOSE)
@@ -135,6 +145,11 @@ start:
 	catch (wchar_t *Msg) {
 		MessageBox(NULL, Msg, L"wifishare", 16);
 	}
+
+
+finish:
+
+	WSACleanup();
 
 	// 删除上面创建的 shell 管理器。
 	if (pShellManager != NULL)

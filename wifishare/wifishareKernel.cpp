@@ -3,6 +3,7 @@
 #include "wifishareKernel.h"
 #include <winsvc.h>
 
+
 #pragma comment(lib, "wlanapi.lib")
 #pragma comment(lib,"Iphlpapi.lib") 
 
@@ -93,11 +94,22 @@ namespace lqx {
 		if (ReturnValue != ERROR_SUCCESS) throw L"WlanHostedNetworkQuerySecondaryKey调用失败。";
 		if (IsPassPhrase) {
 			HostedNetworkInfo->IsPassPhase = true;
-			strcpy_s(HostedNetworkInfo->Key, 64, (char*)KeyData);
+			if (KeyData) {
+				strcpy_s(HostedNetworkInfo->Key, 64, (char*)KeyData);
+			}
+			else {
+				HostedNetworkInfo->Key[0] = '\0';
+			}
 		}
 		else {
-			HostedNetworkInfo->IsPassPhase = false;
-			memcpy_s(HostedNetworkInfo->Key, 64, KeyData, 32);
+			if (KeyData) {
+				HostedNetworkInfo->IsPassPhase = false;
+				memcpy_s(HostedNetworkInfo->Key, 64, KeyData, 32);
+			}
+			else {
+				HostedNetworkInfo->IsPassPhase = true;
+				HostedNetworkInfo->Key[0] = '\0';
+			}
 		}
 		WlanFreeMemory(KeyData);
 
@@ -232,7 +244,7 @@ namespace lqx {
 	}
 
 
-	void EnumConnections(void(*Proc)(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction))
+	void EnumConnections(std::function<void(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction)> callback)
 	{
 		CoInitialize(NULL);
 
@@ -311,6 +323,7 @@ namespace lqx {
 							NetConnectionInfo.Name = pNP->pszwName;
 							NetConnectionInfo.Status = pNP->Status;
 
+
 							hr = pNSM->get_INetSharingConfigurationForINetConnection(pNC, &pNSC);
 							if (hr != S_OK) throw L"get_INetSharingConfigurationForINetConnection调用失败。";
 							VARIANT_BOOL SharingEnabled;
@@ -325,7 +338,7 @@ namespace lqx {
 								if (SharingConnectionType == ICSSHARINGTYPE_PRIVATE) SharingType_old = SharingType = SharingType_Private;
 							}
 
-							(*Proc)(&NetConnectionInfo, &SharingType, &ConnectingAction);
+							callback(&NetConnectionInfo, &SharingType, &ConnectingAction);
 
 
 							switch (SharingType)
@@ -426,52 +439,49 @@ namespace lqx {
 	}
 
 
-	void GetAdaptersInfo(void(*proc)(PIP_ADAPTER_INFO pIpAdapterInfo))
+	//调用这个函数之前要先调用 WSAStartup （一个程序只需调用一次WSAStartup)
+	//成功返回true
+	bool GetAdaptersInfo(std::function<void(PIP_ADAPTER_ADDRESSES pIpAdapterInfo)> callback)
 	{
+		PIP_ADAPTER_ADDRESSES pIpAdapterInfo = new IP_ADAPTER_ADDRESSES;    //存储 IP_ADAPTER_ADDRESSES 列表
+		ULONG size = sizeof(IP_ADAPTER_ADDRESSES);                          //当前 pIpAdapterInfo 的大小
+		ULONG ret = GetAdaptersAddresses(
+			AF_UNSPEC,  //同时返回IPv4和IPv6地址
+			0,          //flags
+			NULL,       //Reserved
+			pIpAdapterInfo,
+			&size
+		);
 
-		//PIP_ADAPTER_INFO结构体指针存储本机网卡信息
-		PIP_ADAPTER_INFO pIpAdapterInfo = new IP_ADAPTER_INFO();
-		//得到结构体大小,用于GetAdaptersInfo参数
-		unsigned long stSize = sizeof(IP_ADAPTER_INFO);
-		//调用GetAdaptersInfo函数,填充pIpAdapterInfo指针变量;其中stSize参数既是一个输入量也是一个输出量
-		int nRel = GetAdaptersInfo(pIpAdapterInfo, &stSize);
-		//记录网卡数量
-		//记录每张网卡上的IP地址数量
-		int IPnumPerNetCard = 0;
-		if (ERROR_BUFFER_OVERFLOW == nRel)
-		{
-			//如果函数返回的是ERROR_BUFFER_OVERFLOW
-			//则说明GetAdaptersInfo参数传递的内存空间不够,同时其传出stSize,表示需要的空间大小
-			//这也是说明为什么stSize既是一个输入量也是一个输出量
-			//释放原来的内存空间
+		if (ret == ERROR_BUFFER_OVERFLOW) {
+			//分配的空间不够
 			delete pIpAdapterInfo;
-			//重新申请内存空间用来存储所有网卡信息
-			pIpAdapterInfo = (PIP_ADAPTER_INFO)new BYTE[stSize];
-			//再次调用GetAdaptersInfo函数,填充pIpAdapterInfo指针变量
-			nRel = GetAdaptersInfo(pIpAdapterInfo, &stSize);
+			//此时size储存了最终需要的空间
+			pIpAdapterInfo = (PIP_ADAPTER_ADDRESSES)new BYTE[size];
+			ret = GetAdaptersAddresses(
+				AF_UNSPEC,  //同时返回IPv4和IPv6地址
+				0,          //flags
+				NULL,       //Reserved
+				pIpAdapterInfo,
+				&size
+			);
 		}
-		if (ERROR_SUCCESS == nRel)
-		{
-			//输出网卡信息
-			//可能有多网卡,因此通过循环去判断
+
+		if (ret == ERROR_SUCCESS || ret == ERROR_ADDRESS_NOT_ASSOCIATED) {
 			while (pIpAdapterInfo)
 			{
-				(*proc)(pIpAdapterInfo);
+				callback(pIpAdapterInfo);
 				pIpAdapterInfo = pIpAdapterInfo->Next;
 			}
 
-		}
-		else
-		{
-			throw L"GetAdaptersInfo调用失败。";
-		}
-
-
-		//释放内存空间
-		if (pIpAdapterInfo)
-		{
 			delete pIpAdapterInfo;
+			return true;
 		}
+		else {
+			delete pIpAdapterInfo;
+			return false;
+		}
+
 
 	}
 

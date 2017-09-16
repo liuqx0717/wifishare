@@ -3,6 +3,7 @@
 #include "wifishareCommonLib.h"
 #include "wifishareKernel.h"
 
+#include <functional>
 
 namespace lqx {
 
@@ -124,118 +125,139 @@ namespace lqx {
 
 
 
-	ADAPTER_INFO *_wifishareCommonLib_proc1_AdapterInfos;
-	size_t _wifishareCommonLib_proc1_MaxCount;
-	size_t _wifishareCommonLib_proc1_i;
-	
-	void wifishareCommonLib_proc1(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction)
-	{
-		if (_wifishareCommonLib_proc1_i < _wifishareCommonLib_proc1_MaxCount) {
-			_wifishareCommonLib_proc1_AdapterInfos[_wifishareCommonLib_proc1_i].Name.SetString(NetConnectionInfo->Name);
-			_wifishareCommonLib_proc1_AdapterInfos[_wifishareCommonLib_proc1_i].DeviceName.SetString(NetConnectionInfo->DeviceName);
-			_wifishareCommonLib_proc1_AdapterInfos[_wifishareCommonLib_proc1_i].Status = NetConnectionInfo->Status;
-			_wifishareCommonLib_proc1_AdapterInfos[_wifishareCommonLib_proc1_i].SharingType = *SharingType;
-		}
-		_wifishareCommonLib_proc1_i++;
-	}
 
-	void wifishareCommonLib_proc2(PIP_ADAPTER_INFO pIpAdapterInfo)
-	{
-		wchar_t tmp[256];
 
-		for (size_t i = 0; i < _wifishareCommonLib_proc1_i; i++) {
-			MultiByteToWideChar(CP_ACP, 0, pIpAdapterInfo->Description, -1, tmp, 256);
-			if (!_wifishareCommonLib_proc1_AdapterInfos[i].DeviceName.Compare(tmp)) {
-				IP_ADDR_STRING *pIpAddrString = &(pIpAdapterInfo->IpAddressList);
-				MultiByteToWideChar(CP_ACP, 0, pIpAddrString->IpAddress.String, -1, tmp, 128);
-				_wifishareCommonLib_proc1_AdapterInfos[i].IP.SetString(tmp);
+	size_t GetAllAdaptersInfo(ADAPTER_INFO *AdaptersInfo, size_t MaxCount)
+	{
+		MaxCount = MaxCount;
+		size_t AdaptersInfoCount = 0;
+
+		lqx::EnumConnections([&AdaptersInfo, &AdaptersInfoCount, &MaxCount](_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction) {
+			if (AdaptersInfoCount < MaxCount) {
+				AdaptersInfo[AdaptersInfoCount].Name.SetString(NetConnectionInfo->Name);
+				AdaptersInfo[AdaptersInfoCount].DeviceName.SetString(NetConnectionInfo->DeviceName);
+				AdaptersInfo[AdaptersInfoCount].Status = NetConnectionInfo->Status;
+				AdaptersInfo[AdaptersInfoCount].SharingType = *SharingType;
 			}
-			
-		}
-
-	}
-
-	size_t GetAllAdaptersInfo(ADAPTER_INFO *AdapterInfos, size_t MaxCount)
-	{
-		_wifishareCommonLib_proc1_AdapterInfos = AdapterInfos;
-		_wifishareCommonLib_proc1_MaxCount = MaxCount;
-		_wifishareCommonLib_proc1_i = 0;
-
-		EnumConnections(&wifishareCommonLib_proc1);
-		lqx::GetAdaptersInfo(&wifishareCommonLib_proc2);
-
-		return _wifishareCommonLib_proc1_i;
-
-	}
+			AdaptersInfoCount++;
+		});
 
 
+		bool ret = lqx::GetAdaptersInfo([&AdaptersInfoCount, &AdaptersInfo](PIP_ADAPTER_ADDRESSES pIpAdapterInfo) {
+			wchar_t str[256];
+			DWORD strsize = 256;
+
+			bool foundIPv4 = false;
+			bool foundIPv6 = false;
+			INT ret;
+
+			for (size_t i = 0; i < AdaptersInfoCount; i++) {
+				if (!AdaptersInfo[i].DeviceName.Compare(pIpAdapterInfo->Description)) {
+					foundIPv4 = false;
+					foundIPv6 = false;
+
+					auto pUnicast = pIpAdapterInfo->FirstUnicastAddress;
+					if (pUnicast != NULL) {
+						int j;
+						for (j = 0; pUnicast != NULL; j++) {
+							if (pUnicast->Address.lpSockaddr->sa_family == AF_INET && !foundIPv4) {   //IPv4 
+																									  //只管第一个IPv4地址
+								foundIPv4 = true;
+								ret = WSAAddressToStringW(
+									pUnicast->Address.lpSockaddr,
+									pUnicast->Address.iSockaddrLength,
+									NULL,
+									str,
+									&strsize
+								);
+								if (ret) {
+									throw L"WSAAddressToStringW(IPv4)调用失败。";
+								}
+								AdaptersInfo[i].IPv4.SetString(str);
+							}
+
+							if (pUnicast->Address.lpSockaddr->sa_family == AF_INET6 && !foundIPv6) {
+								//只管第一个IPv6地址
+								foundIPv6 = true;
+								ret = WSAAddressToStringW(
+									pUnicast->Address.lpSockaddr,
+									pUnicast->Address.iSockaddrLength,
+									NULL,
+									str,
+									&strsize
+								);
+								if (ret) {
+									throw L"WSAAddressToStringW(IPv6)调用失败。";
+								}
+								AdaptersInfo[i].IPv6.SetString(str);
+							}
+							pUnicast = pUnicast->Next;
+						}
+					}
+
+					if (!foundIPv4) AdaptersInfo[i].IPv4.SetString(L"不存在");
+					if (!foundIPv6) AdaptersInfo[i].IPv6.SetString(L"不存在");
 
 
+				}
 
-	const wchar_t *_wifishareCommonLib_proc3_DeviceName;
-	bool _wifishareCommonLib_proc3_found;
-
-	void wifishareCommonLib_proc3(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction)
-	{
-
-		if (!wcscmp(NetConnectionInfo->DeviceName, _wifishareCommonLib_proc3_DeviceName)) {
-			*SharingType = SharingType_Public;
-		}
-		else if (wcsstr(NetConnectionInfo->DeviceName, HOSTEDNETWORK_DEVICENAME)) {
-			if (!_wifishareCommonLib_proc3_found)
-			{
-				*SharingType = SharingType_Private;
-				_wifishareCommonLib_proc3_found = true;
 			}
+
+
+
+		});
+
+		if (!ret) {
+			throw L"lqx::GetAdaptersInfo调用失败。";
 		}
 
+		return AdaptersInfoCount;
+
 	}
+
+
+
+
+
 
 	void StartSharing(const wchar_t *DeviceName)
 	{
+		bool found;
+
 		StopSharing();
 
-		_wifishareCommonLib_proc3_DeviceName = DeviceName;
-		_wifishareCommonLib_proc3_found = false;
-		EnumConnections(&wifishareCommonLib_proc3);
-		
-	}
+		found = false;
+		EnumConnections([&DeviceName,&found](_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction) {
+			if (!wcscmp(NetConnectionInfo->DeviceName, DeviceName)) {
+				*SharingType = SharingType_Public;
+			}
+			else if (wcsstr(NetConnectionInfo->DeviceName, HOSTEDNETWORK_DEVICENAME)) {
+				if (!found)
+				{
+					*SharingType = SharingType_Private;
+					found = true;
+				}
+			}
+		});
 
-
-
-
-
-
-	void wifishareCommonLib_proc4(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction)
-	{
-		*SharingType = lqx::SharingType_None;
 	}
 
 	void StopSharing()
 	{
-		EnumConnections(&wifishareCommonLib_proc4);
+		EnumConnections([](_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction) {
+			*SharingType = lqx::SharingType_None;
+		});
 	}
 
 
-
-
-	
-	const wchar_t *_wifishareCommonLib_proc5_DeviceName;
-	bool _wifishareCommonLib_proc5_Connect;
-
-	void wifishareCommonLib_proc5(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction)
-	{
-		if (!wcscmp(NetConnectionInfo->DeviceName, _wifishareCommonLib_proc5_DeviceName)) {
-			*ConnectingAction = _wifishareCommonLib_proc5_Connect ? ConnectingAction_Connect : ConnectingAction_Disconnect;
-		}
-	}
 
 	void ChangeAdapterSdate(const wchar_t *DeviceName, bool Connect)
 	{
-		_wifishareCommonLib_proc5_DeviceName = DeviceName;
-		_wifishareCommonLib_proc5_Connect = Connect;
-
-		EnumConnections(&wifishareCommonLib_proc5);
+		EnumConnections([&DeviceName,&Connect](_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction) {
+			if (!wcscmp(NetConnectionInfo->DeviceName, DeviceName)) {
+				*ConnectingAction = Connect ? ConnectingAction_Connect : ConnectingAction_Disconnect;
+			}
+		});
 	}
 
 

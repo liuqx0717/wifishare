@@ -12,17 +12,17 @@
 // CwifishareDlg 对话框
 class CwifishareDlg : public CDialogEx
 {
-// 构造
+	// 构造
 public:
 	CwifishareDlg(CWnd* pParent = NULL);	// 标准构造函数
 	~CwifishareDlg();
 
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_WIFISHARE_DIALOG };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 private:
@@ -38,9 +38,10 @@ private:
 	HANDLE m_hMutex_GetAllData;
 	CAboutDlg m_AboutDlg;
 	bool m_AboutDlgShown;
+	bool m_IsPasswordValid;
 
 
-// 实现
+	// 实现
 protected:
 	HICON m_hIcon;
 
@@ -52,9 +53,9 @@ protected:
 	void OnOK();
 	void GetAllData();
 	//0：显示“启用共享”  1：显示“正在启用...”  2：显示“停止共享”  3：显示“正在停止...”  4:按钮失效
-	void ChangeState_StartSharingButton(int state); 
+	void ChangeState_StartSharingButton(int state);
 	//0：显示“开启热点”  1：显示“正在开启...”  2：显示“关闭热点”  3：显示“正在关闭...”  4:按钮失效
-	void ChangeState_StartHostedNetworkButton(int state); 
+	void ChangeState_StartHostedNetworkButton(int state);
 	//0：显示“禁用”  1：显示“正在禁用...”  2：显示“启用”  3：显示“正在启用...”  4:按钮失效
 	void ChangeState_DisableButton(int state);
 	void InitControls();
@@ -133,4 +134,7 @@ public:
 	afx_msg void OnBnClickedButton8();
 	afx_msg void OnBnClickedButton7();
 	afx_msg void OnBnClickedButton9();
+	// 有线网卡IPv6地址
+	CEdit m_EditBox_IP3;
+	afx_msg void OnBnClickedButton10();
 };

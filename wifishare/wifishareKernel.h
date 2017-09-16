@@ -3,7 +3,10 @@
 
 #include <wlanapi.h>
 #include <NetCon.h> 
+#include <winsock2.h>
 #include <Iphlpapi.h>
+
+#include <functional>
 
 namespace lqx {
 
@@ -41,9 +44,12 @@ namespace lqx {
 	void SetHostedNetwork(_HostedNetworkInfo *HostedNetworkInfo);
 	void StartHostedNetwork();
 	void StopHostedNetwork();
-	void EnumConnections(void(*Proc)(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction));
+	void EnumConnections(std::function<void(_NetConnectionInfo *NetConnectionInfo, _SharingType *SharingType, _ConnectingAction *ConnectingAction)> callback);
 	void SetWlanPowerState(bool PowerOn);
-	void GetAdaptersInfo(void(*proc)(PIP_ADAPTER_INFO pIpAdapterInfo));
+
+	//调用这个函数之前要先调用 WSAStartup （一个程序只需调用一次WSAStartup)
+	//成功返回true
+	bool GetAdaptersInfo(std::function<void(PIP_ADAPTER_ADDRESSES pIpAdapterInfo)> callback);
 	DWORD ChangeServiceStatusW(const wchar_t *Name, bool Start, int TimeOut/*单位：秒*/);
-	
+
 }

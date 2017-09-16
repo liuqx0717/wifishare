@@ -240,3 +240,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/tmp/wifishare/Win32
+/bin_Debug/wifishare
+/bin_Release/wifishare

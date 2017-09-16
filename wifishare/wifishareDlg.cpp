@@ -20,7 +20,7 @@
 
 CwifishareDlg::CwifishareDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_WIFISHARE_DIALOG, pParent)
-	
+
 {
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_hIcon = AfxGetApp()->LoadStandardIcon(IDI_APPLICATION);   //设置两个对话框的图标
@@ -36,6 +36,7 @@ CwifishareDlg::CwifishareDlg(CWnd* pParent /*=NULL*/)
 	m_SelectedDeviceName.Empty();
 	m_StartSharing = false;
 	m_AboutDlgShown = false;
+	m_IsPasswordValid = true;
 	if (!(m_hMutex_GetAllData = CreateMutex(NULL, FALSE, NULL))) {
 		throw L"CreateMutex调用失败。";
 	}
@@ -80,6 +81,7 @@ void CwifishareDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON8, m_Button_Close);
 	DDX_Control(pDX, IDC_BUTTON7, m_Button_Exit);
 	DDX_Control(pDX, IDC_BUTTON9, m_Button_About);
+	DDX_Control(pDX, IDC_EDIT16, m_EditBox_IP3);
 }
 
 BEGIN_MESSAGE_MAP(CwifishareDlg, CDialogEx)
@@ -104,6 +106,7 @@ BEGIN_MESSAGE_MAP(CwifishareDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON8, &CwifishareDlg::OnBnClickedButton8)
 	ON_BN_CLICKED(IDC_BUTTON7, &CwifishareDlg::OnBnClickedButton7)
 	ON_BN_CLICKED(IDC_BUTTON9, &CwifishareDlg::OnBnClickedButton9)
+	ON_BN_CLICKED(IDC_BUTTON10, &CwifishareDlg::OnBnClickedButton10)
 END_MESSAGE_MAP()
 
 
@@ -118,9 +121,9 @@ BOOL CwifishareDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	// TODO: 在此添加额外的初始化代码
+									// TODO: 在此添加额外的初始化代码
 
-	//GetSystemMenu(FALSE)->EnableMenuItem(SC_CLOSE, MF_DISABLED);
+									//GetSystemMenu(FALSE)->EnableMenuItem(SC_CLOSE, MF_DISABLED);
 
 	InitControls();
 	GetAllData();
@@ -147,7 +150,7 @@ void CwifishareDlg::OnPaint()
 		GetClientRect(&rect);
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
-		
+
 		// 绘制图标
 		dc.DrawIcon(x, y, m_hIcon);
 	}
@@ -185,6 +188,7 @@ void CwifishareDlg::InitControls()
 	m_EditBox_SSID.SetLimitText(30);
 	m_EditBox_Key.SetLimitText(255);
 	m_EditBox_IP2.SetWindowTextW(L" -");
+	m_EditBox_IP3.SetWindowTextW(L" -");
 	m_EditBox_State2.SetWindowTextW(L" -");
 	m_EditBox_DeviceName.SetWindowTextW(L" -");
 	m_EditBox_Name.SetWindowTextW(L" -");
@@ -198,11 +202,11 @@ void CwifishareDlg::InitControls()
 	m_EditBox_CipherAlgo.SetWindowTextW(L" -");
 	m_ComboBox_Interface.SetWindowTextW(L" -");
 	if (m_IsPasswordHidden) {
-		m_Button_ShowPassword.SetWindowTextW(L"显示密码");
+		m_Button_ShowPassword.SetWindowTextW(L"显示");
 		m_EditBox_Key.SetPasswordChar(9679);
 	}
 	else {
-		m_Button_ShowPassword.SetWindowTextW(L"隐藏密码");
+		m_Button_ShowPassword.SetWindowTextW(L"隐藏");
 		m_EditBox_Key.SetPasswordChar(0);
 	}
 	m_Button_Save.EnableWindow(FALSE);
@@ -238,6 +242,7 @@ void CwifishareDlg::GetAllData()
 		((CButton *)GetDlgItem(IDC_RADIO2))->SetCheck(FALSE);
 		MultiByteToWideChar(CP_ACP, 0, HostedNetworkInfo.Key, -1, tmp, 256);
 		m_EditBox_Key.SetWindowTextW(tmp);
+		if (HostedNetworkInfo.Key[0] == '\0') m_IsPasswordValid = false;
 	}
 	else {
 		((CButton *)GetDlgItem(IDC_RADIO2))->SetCheck(TRUE);
@@ -261,38 +266,38 @@ void CwifishareDlg::GetAllData()
 	found = false;
 	for (size_t i = 0; i < m_AdapterCount; i++) {
 		if (!m_AdapterInfos[i].DeviceName.Compare(HOSTEDNETWORK_DEVICENAME)) {
-			m_EditBox_IP1.SetWindowTextW(m_AdapterInfos[i].IP);
+			m_EditBox_IP1.SetWindowTextW(m_AdapterInfos[i].IPv4);
 			found = true;
 			break;
 		}
 	}
-	if(!found){
+	if (!found) {
 		m_EditBox_IP1.SetWindowTextW(L"不存在");
 	}
 
 	_itow_s(HostedNetworkInfo.NumberOfPeers, tmp, 256, 10);
 	m_EditBox_NumberOfPeers.SetWindowTextW(tmp);
-	
+
 	switch (HostedNetworkInfo.dot11AuthAlgo) {
-	case DOT11_AUTH_ALGO_80211_OPEN :
+	case DOT11_AUTH_ALGO_80211_OPEN:
 		m_EditBox_AuthAlgo.SetWindowTextW(L"802.11_OPEN");
 		break;
-	case DOT11_AUTH_ALGO_80211_SHARED_KEY :
+	case DOT11_AUTH_ALGO_80211_SHARED_KEY:
 		m_EditBox_AuthAlgo.SetWindowTextW(L"802.11_SHARED_KEY");
 		break;
-	case DOT11_AUTH_ALGO_WPA :
+	case DOT11_AUTH_ALGO_WPA:
 		m_EditBox_AuthAlgo.SetWindowTextW(L"WPA");
 		break;
-	case DOT11_AUTH_ALGO_WPA_PSK :
+	case DOT11_AUTH_ALGO_WPA_PSK:
 		m_EditBox_AuthAlgo.SetWindowTextW(L"WPA_PSK");
 		break;
-	case DOT11_AUTH_ALGO_WPA_NONE :
+	case DOT11_AUTH_ALGO_WPA_NONE:
 		m_EditBox_AuthAlgo.SetWindowTextW(L"WPA_NONE");
 		break;
-	case DOT11_AUTH_ALGO_RSNA :
+	case DOT11_AUTH_ALGO_RSNA:
 		m_EditBox_AuthAlgo.SetWindowTextW(L"RSNA");
 		break;
-	case DOT11_AUTH_ALGO_RSNA_PSK :
+	case DOT11_AUTH_ALGO_RSNA_PSK:
 		m_EditBox_AuthAlgo.SetWindowTextW(L"RSNA_PSK");
 		break;
 	default:
@@ -338,7 +343,7 @@ void CwifishareDlg::GetAllData()
 			m_ComboBox_Interface.AddString(m_AdapterInfos[i].DeviceName);
 		}
 	}
-	
+
 	m_ComboBox_Interface.SelectString(0, AfxGetApp()->GetProfileStringW(L"Data", L"DefaultDevice"));
 	OnCbnSelchangeCombo1();
 
@@ -472,7 +477,7 @@ void CwifishareDlg::OnEnChangeEdit1()   //SSID
 	// 函数并调用 CRichEditCtrl().SetEventMask()，
 	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
 
-	if(!m_Programatically) m_Button_Save.EnableWindow(TRUE);
+	if (!m_Programatically) m_Button_Save.EnableWindow(TRUE);
 
 	// TODO:  在此添加控件通知处理程序代码
 }
@@ -530,13 +535,13 @@ void CwifishareDlg::OnBnClickedButton1()   //显示密码
 	m_Programatically = true;
 	if (m_IsPasswordHidden) {
 		m_EditBox_Key.SetPasswordChar(0);
-		m_Button_ShowPassword.SetWindowTextW(L"隐藏密码");
+		m_Button_ShowPassword.SetWindowTextW(L"隐藏");
 		m_EditBox_Key.Invalidate();
 		m_IsPasswordHidden = false;
 	}
 	else {
 		m_EditBox_Key.SetPasswordChar(9679);
-		m_Button_ShowPassword.SetWindowTextW(L"显示密码");
+		m_Button_ShowPassword.SetWindowTextW(L"显示");
 		m_EditBox_Key.Invalidate();
 		m_IsPasswordHidden = true;
 	}
@@ -558,7 +563,8 @@ void CwifishareDlg::OnCbnSelchangeCombo1()   //网卡选择
 
 	for (size_t i = 0; i < m_AdapterCount; i++) {
 		if (!m_AdapterInfos[i].DeviceName.Compare(m_SelectedDeviceName)) {
-			m_EditBox_IP2.SetWindowTextW(m_AdapterInfos[i].IP);
+			m_EditBox_IP2.SetWindowTextW(m_AdapterInfos[i].IPv4);
+			m_EditBox_IP3.SetWindowTextW(m_AdapterInfos[i].IPv6);
 			m_EditBox_Name.SetWindowTextW(m_AdapterInfos[i].Name);
 			m_EditBox_DeviceName.SetWindowTextW(m_AdapterInfos[i].DeviceName);
 
@@ -684,7 +690,7 @@ UINT CwifishareDlg::StopHostedNetwork(LPVOID p)
 		dlg->ChangeState_StartHostedNetworkButton(2);
 		AfxMessageBox(Msg, 16);
 	}
-	
+
 	return 0;
 }
 
@@ -695,6 +701,10 @@ void CwifishareDlg::OnBnClickedButton3()  //热点开关
 	switch (m_State_StartHostedNetworkButton)
 	{
 	case 0:
+		if (!m_IsPasswordValid) {
+			MessageBox(L"密码不能为空。", L"wifishare", 16);
+			return;
+		}
 		ChangeState_StartHostedNetworkButton(1);
 		AfxBeginThread(&StartHostedNetwork, this);
 		break;
@@ -756,6 +766,10 @@ void CwifishareDlg::OnBnClickedButton4()  //共享开关
 	switch (m_State_StartSharingButton)
 	{
 	case 0:
+		if (!m_IsPasswordValid) {
+			MessageBox(L"密码不能为空。", L"wifishare", 16);
+			return;
+		}
 		ChangeState_StartSharingButton(1);
 		if (m_State_StartHostedNetworkButton == 0) {
 			m_StartSharing = true;
@@ -873,6 +887,7 @@ void CwifishareDlg::OnBnClickedButton2()   //保存修改
 		HostedNetworkInfo.IsPassPhase = true;
 		WideCharToMultiByte(CP_ACP, 0, tmp2, -1, tmp1, 512, &ch, NULL);
 		strcpy_s(HostedNetworkInfo.Key, 64, tmp1);
+		m_IsPasswordValid = true;
 
 	}
 	else {
@@ -893,6 +908,7 @@ void CwifishareDlg::OnBnClickedButton2()   //保存修改
 
 		HostedNetworkInfo.IsPassPhase = false;
 		memcpy_s(HostedNetworkInfo.Key, 32, tmp1, 32);
+		m_IsPasswordValid = true;
 
 	}
 
@@ -919,6 +935,7 @@ void CwifishareDlg::OnBnClickedButton2()   //保存修改
 	}
 
 	MessageBox(L"成功保存！");
+	m_Button_Save.EnableWindow(FALSE);
 
 	GetAllData();
 
@@ -967,5 +984,12 @@ void CwifishareDlg::OnBnClickedButton9()
 	// TODO: 在此添加控件通知处理程序代码
 
 	AfxBeginThread(&ShowAboutDlg, this);
-	
+
+}
+
+
+void CwifishareDlg::OnBnClickedButton10()
+{
+	// TODO: Add your control notification handler code here
+	WinExec("control netconnections", SW_SHOW);
 }
