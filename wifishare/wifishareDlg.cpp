@@ -126,7 +126,13 @@ BOOL CwifishareDlg::OnInitDialog()
 									//GetSystemMenu(FALSE)->EnableMenuItem(SC_CLOSE, MF_DISABLED);
 
 	InitControls();
-	GetAllData();
+
+	try {
+		GetAllData();
+	}
+	catch (wchar_t *Msg) {
+		MessageBox(Msg, L"wifishare", 16);
+	}
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -665,8 +671,12 @@ UINT CwifishareDlg::StartHostedNetwork(LPVOID p)
 		if (dlg->m_StartSharing) {
 			dlg->m_StartSharing = false;
 			dlg->m_State_StartSharingButton = 0;
-			dlg->ChangeState_StartHostedNetworkButton(0);
+			dlg->ChangeState_StartSharingButton(0);
 		}
+		
+		dlg->m_State_StartHostedNetworkButton = 0;
+		dlg->ChangeState_StartHostedNetworkButton(0);
+
 		AfxMessageBox(Msg, 16);
 	}
 
@@ -796,7 +806,12 @@ void CwifishareDlg::OnBnClickedButton6()  //刷新数据
 {
 	// TODO: 在此添加控件通知处理程序代码
 	InitControls();
-	GetAllData();
+	try {
+		GetAllData();
+	}
+	catch (wchar_t *Msg) {
+		MessageBox(Msg, L"wifishare", 16);
+	}
 }
 
 UINT CwifishareDlg::DisableAdapter(LPVOID p)

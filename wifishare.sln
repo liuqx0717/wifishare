@@ -7,14 +7,22 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wifishare", "wifishare\wifi
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_full|x64 = Debug_full|x64
+		Debug_full|x86 = Debug_full|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Release_full|x64 = Release_full|x64
 		Release_full|x86 = Release_full|x86
+		release_xp|x64 = release_xp|x64
+		release_xp|x86 = release_xp|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Debug_full|x64.ActiveCfg = Debug_full|x64
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Debug_full|x64.Build.0 = Debug_full|x64
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Debug_full|x86.ActiveCfg = Debug_full|Win32
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Debug_full|x86.Build.0 = Debug_full|Win32
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Debug|x64.ActiveCfg = Debug|x64
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Debug|x64.Build.0 = Debug|x64
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Debug|x86.ActiveCfg = Debug|Win32
@@ -23,6 +31,10 @@ Global
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Release_full|x64.Build.0 = Release_full|x64
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Release_full|x86.ActiveCfg = Release_full|Win32
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Release_full|x86.Build.0 = Release_full|Win32
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.release_xp|x64.ActiveCfg = release_xp|Win32
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.release_xp|x64.Build.0 = release_xp|Win32
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.release_xp|x86.ActiveCfg = release_xp|Win32
+		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.release_xp|x86.Build.0 = release_xp|Win32
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Release|x64.ActiveCfg = Release|x64
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Release|x64.Build.0 = Release|x64
 		{65FE6A96-9EAE-4D19-A25F-E76B2B009F78}.Release|x86.ActiveCfg = Release|Win32

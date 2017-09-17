@@ -421,6 +421,9 @@ namespace lqx {
 		DWORD DataSize;
 		WLAN_PHY_RADIO_STATE *state;
 		dwResult = WlanQueryInterface(hClient, &pIfList->InterfaceInfo[0].InterfaceGuid, wlan_intf_opcode_radio_state, NULL, &DataSize, (PVOID*)&state, NULL);
+		if (dwResult != ERROR_SUCCESS) {
+			throw L"WlanQueryInterfaceµ÷ÓÃÊ§°Ü¡£";
+		}
 
 		state->dwPhyIndex = 0;
 		state->dot11SoftwareRadioState = PowerOn ? dot11_radio_state_on : dot11_radio_state_off;
