@@ -15,8 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-    <Text Include="使用说明.txt" />
+    <Text Include="使用说明.txt">
+      <Filter>源文件</Filter>
+    </Text>
+    <Text Include="ReadMe.txt">
+      <Filter>源文件</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="wifishare.h">
@@ -73,6 +77,7 @@
     <None Include="res\wifishare.rc2">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="..\README.md" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\wifishare.ico">
