@@ -322,6 +322,7 @@ namespace lqx {
 							NetConnectionInfo.DeviceName = pNP->pszwDeviceName;
 							NetConnectionInfo.Name = pNP->pszwName;
 							NetConnectionInfo.Status = pNP->Status;
+							NetConnectionInfo.guid = pNP->guidId;
 
 
 							hr = pNSM->get_INetSharingConfigurationForINetConnection(pNC, &pNSC);

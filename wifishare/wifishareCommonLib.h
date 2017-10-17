@@ -6,8 +6,9 @@
 namespace lqx {
 
 	struct ADAPTER_INFO {
-		CString Name;
-		CString DeviceName;
+		CStringW Name;
+		CStringW DeviceName;
+		GUID guid;
 		NETCON_STATUS Status;
 		CString IPv4;
 		CString IPv6;

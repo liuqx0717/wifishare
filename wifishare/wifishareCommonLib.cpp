@@ -137,6 +137,7 @@ namespace lqx {
 				AdaptersInfo[AdaptersInfoCount].Name.SetString(NetConnectionInfo->Name);
 				AdaptersInfo[AdaptersInfoCount].DeviceName.SetString(NetConnectionInfo->DeviceName);
 				AdaptersInfo[AdaptersInfoCount].Status = NetConnectionInfo->Status;
+				AdaptersInfo[AdaptersInfoCount].guid = NetConnectionInfo->guid;
 				AdaptersInfo[AdaptersInfoCount].SharingType = *SharingType;
 			}
 			AdaptersInfoCount++;
@@ -146,13 +147,17 @@ namespace lqx {
 		bool ret = lqx::GetAdaptersInfo([&AdaptersInfoCount, &AdaptersInfo](PIP_ADAPTER_ADDRESSES pIpAdapterInfo) {
 			wchar_t str[256];
 			DWORD strsize = 256;
+			NET_LUID luid;
 
 			bool foundIPv4 = false;
 			bool foundIPv6 = false;
 			INT ret;
 
 			for (size_t i = 0; i < AdaptersInfoCount; i++) {
-				if (!AdaptersInfo[i].DeviceName.Compare(pIpAdapterInfo->Description)) {
+				if (ConvertInterfaceGuidToLuid(&AdaptersInfo[i].guid, &luid) != NO_ERROR) {
+					throw L"ConvertInterfaceGuidToLuidµ÷ÓÃÊ§°Ü¡£";
+				}
+				if(pIpAdapterInfo->Luid.Value==luid.Value){
 					foundIPv4 = false;
 					foundIPv6 = false;
 

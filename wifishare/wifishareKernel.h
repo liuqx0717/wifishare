@@ -37,6 +37,7 @@ namespace lqx {
 	struct _NetConnectionInfo {
 		wchar_t *Name;     //网络连接名，比如“本地连接”（注意编码）
 		wchar_t *DeviceName;//网络连接名，比如"Realtek PCIe GBE Family Controller"（注意编码）
+		GUID guid;
 		NETCON_STATUS Status; //当前网卡的状态
 	};
 
